@@ -13,15 +13,24 @@ const youtubeService = new YouTubeService(process.env.YOUTUBE_API_KEY);
 // Middleware - Allow all origins including legalolympiad.com
 app.use(
   cors({
-    origin: [
-      "*", // Allow all origins
-      "http://localhost:5173", // Vite dev server
-      "http://localhost:3000", // React dev server
-      "http://localhost:4173", // Vite preview"https://youtube-stastics-k3c6uhs3j-ajay-kumar-saraswats-projects.vercel.app", // Your Vercel frontend
-      "https://legalolympiad.com", // Legal Olympiad website
-      /\.vercel\.app$/, // All Vercel preview deployments
-    ],
-    credentials: false, // Set to false when using wildcard origin
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:4173",
+        "https://legalolympiad.com",
+        "https://youtube-stastics-k3c6uhs3j-ajay-kumar-saraswats-projects.vercel.app",
+      ];
+
+      // Allow requests with no origin (like curl or Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
@@ -32,6 +41,7 @@ app.use(
     ],
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
