@@ -10,9 +10,34 @@ const PORT = process.env.PORT || 3000;
 const youtubeService = new YouTubeService(process.env.YOUTUBE_API_KEY);
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", // Vite dev server
+      "http://localhost:3000", // React dev server
+      "http://localhost:4173", // Vite preview
+      "https://youtube-stastics-k3c6uhs3j-ajay-kumar-saraswats-projects.vercel.app", // Your Vercel frontend
+      /\.vercel\.app$/, // All Vercel preview deployments
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Handle preflight requests
+app.options("*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.sendStatus(200);
+});
 
 // Basic route
 app.get("/", (req, res) => {
