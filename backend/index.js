@@ -10,33 +10,41 @@ const PORT = process.env.PORT || 3000;
 // Initialize YouTube service
 const youtubeService = new YouTubeService(process.env.YOUTUBE_API_KEY);
 
-// Middleware
+// Middleware - Allow all origins including legalolympiad.com
 app.use(
   cors({
     origin: [
+      "*", // Allow all origins
       "http://localhost:5173", // Vite dev server
       "http://localhost:3000", // React dev server
-      "http://localhost:4173", // Vite preview
-      "https://youtube-stastics-k3c6uhs3j-ajay-kumar-saraswats-projects.vercel.app", // Your Vercel frontend
+      "http://localhost:4173", // Vite preview"https://youtube-stastics-k3c6uhs3j-ajay-kumar-saraswats-projects.vercel.app", // Your Vercel frontend
+      "https://legalolympiad.com", // Legal Olympiad website
       /\.vercel\.app$/, // All Vercel preview deployments
     ],
-    credentials: true,
+    credentials: false, // Set to false when using wildcard origin
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
   })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Handle preflight requests
+// Handle preflight requests - Comprehensive CORS headers
 app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Access-Control-Allow-Origin", "*"); // Allow all origins
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With"
+    "Content-Type, Authorization, X-Requested-With, Accept, Origin"
   );
-  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Credentials", "false"); // Must be false with wildcard origin
+  res.header("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
   res.sendStatus(200);
 });
 
