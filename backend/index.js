@@ -165,7 +165,7 @@ app.get("/api/proxy/youtube/stats", async (req, res) => {
       });
     }
 
-    // Construct the Vercel API URL
+    // Construct the Vercel API URL (works for both local and deployed)
     const vercelApiUrl =
       "https://youtube-stastics-k3c6uhs3j-ajay-kumar-saraswats-projects.vercel.app/api/youtube/stats";
     const params = new URLSearchParams();
