@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const YouTubeService = require("./services/youtubeService");
+const axios = require("axios");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -148,6 +149,75 @@ app.get("/api/youtube/video-stats", async (req, res) => {
       message: error.message,
       timestamp: new Date().toISOString(),
     });
+  }
+});
+
+// Proxy endpoint to fetch from Vercel API (bypasses CORS)
+app.get("/api/proxy/youtube/stats", async (req, res) => {
+  try {
+    const { videoId, url } = req.query;
+
+    if (!videoId && !url) {
+      return res.status(400).json({
+        error: "Missing required parameter",
+        message: "Please provide either 'videoId' or 'url' parameter",
+        example: "/api/proxy/youtube/stats?videoId=dQw4w9WgXcQ",
+      });
+    }
+
+    // Construct the Vercel API URL
+    const vercelApiUrl =
+      "https://youtube-stastics-k3c6uhs3j-ajay-kumar-saraswats-projects.vercel.app/api/youtube/stats";
+    const params = new URLSearchParams();
+
+    if (videoId) params.append("videoId", videoId);
+    if (url) params.append("url", url);
+
+    const fullUrl = `${vercelApiUrl}?${params.toString()}`;
+
+    console.log(`Proxying request to: ${fullUrl}`);
+
+    // Fetch from Vercel API
+    const response = await axios.get(fullUrl, {
+      timeout: 10000, // 10 second timeout
+      headers: {
+        "User-Agent": "YouTube-Stats-Proxy/1.0",
+      },
+    });
+
+    // Return the data with CORS headers
+    res.json({
+      success: true,
+      data: response.data,
+      timestamp: new Date().toISOString(),
+      source: "vercel-proxy",
+    });
+  } catch (error) {
+    console.error("Proxy API Error:", error.message);
+
+    if (error.response) {
+      // Vercel API returned an error
+      res.status(error.response.status).json({
+        error: "Vercel API Error",
+        message: error.response.data?.message || error.message,
+        status: error.response.status,
+        timestamp: new Date().toISOString(),
+      });
+    } else if (error.code === "ECONNABORTED") {
+      // Timeout error
+      res.status(504).json({
+        error: "Request Timeout",
+        message: "The Vercel API took too long to respond",
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      // Network or other error
+      res.status(500).json({
+        error: "Proxy Error",
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 });
 
